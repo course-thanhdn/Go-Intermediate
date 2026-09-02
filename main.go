@@ -1,38 +1,44 @@
 package main
-import ("bufio"; "fmt"; "os"; "strconv")
-
-type Shape interface {
-    Area() float64
-}
-
-type Circle struct { 
-    Radius float64
-}
-
-type Square struct {
-    Side float64
-}
-
-func (c Circle) Area() float64 { 
-    return c.Radius * c.Radius * 3.14
-}
-
-func (s Square) Area() float64 {
-    return s.Side * s.Side
-}
-
+import ("bufio"; "fmt"; "os"; "strconv"; "strings"; "sync")
 func main() {
     sc := bufio.NewScanner(os.Stdin)
-    sc.Scan(); kind := sc.Text()
-    sc.Scan(); dim, _ := strconv.ParseFloat(sc.Text(), 64)
-    var s Shape
-    
-    switch kind {
-        case "circle":
-            s = Circle{Radius: dim}
-        case "square":
-            s = Square{Side: dim}
+    sc.Scan(); n, _ := strconv.Atoi(sc.Text())
+    sc.Scan(); fields := strings.Fields(sc.Text())
+    nums := make([]int, n)
+    for i, f := range fields { nums[i], _ = strconv.Atoi(f) }
+    chunk := (n+3)/4
+    var wg sync.WaitGroup
+    var total int
+    var mu sync.Mutex
+
+    for i := 0; i < 4; i++ {
+        start, end := i * chunk, (i + 1) * chunk
+
+        if start > n {
+            start = n
+        }
+
+        if end > n {
+            end = n
+        }
+
+        wg.Add(1)
+        go func(start, end int) {
+            defer wg.Done()
+            partial := 0
+
+            for _, v := range nums[start:end] {
+                partial += v
+            }
+
+            mu.Lock()
+            total += partial
+            mu.Unlock()
+
+        }(start, end)
     }
 
-    if s != nil { fmt.Printf("%.2f\n", s.Area()) }
+    wg.Wait()
+    
+    fmt.Println(total)
 }
