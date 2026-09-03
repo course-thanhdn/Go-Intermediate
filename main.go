@@ -1,44 +1,34 @@
 package main
-import ("bufio"; "fmt"; "os"; "strconv"; "strings"; "sync")
+import ("bufio"; "fmt"; "os"; "strconv"; "strings")
 func main() {
     sc := bufio.NewScanner(os.Stdin)
-    sc.Scan(); n, _ := strconv.Atoi(sc.Text())
-    sc.Scan(); fields := strings.Fields(sc.Text())
-    nums := make([]int, n)
-    for i, f := range fields { nums[i], _ = strconv.Atoi(f) }
-    chunk := (n+3)/4
-    var wg sync.WaitGroup
-    var total int
-    var mu sync.Mutex
+    sc.Scan()
+    fields := strings.Fields(sc.Text())
+    a := make(chan int)
+    b := make(chan int)
+    
+    go func() {
+        defer close(a)
 
-    for i := 0; i < 4; i++ {
-        start, end := i * chunk, (i + 1) * chunk
+        for _, f := range fields {
+            n, _ := strconv.Atoi(f)
 
-        if start > n {
-            start = n
+            a <- n
         }
+    }()
 
-        if end > n {
-            end = n
+    go func() {
+        defer close(b)
+
+        for n := range a {
+            b <- n * n
         }
+    }()
 
-        wg.Add(1)
-        go func(start, end int) {
-            defer wg.Done()
-            partial := 0
-
-            for _, v := range nums[start:end] {
-                partial += v
-            }
-
-            mu.Lock()
-            total += partial
-            mu.Unlock()
-
-        }(start, end)
+    sum := 0
+    for v := range b {
+        sum += v
     }
 
-    wg.Wait()
-    
-    fmt.Println(total)
+    fmt.Println(sum)
 }
