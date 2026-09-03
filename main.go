@@ -17,18 +17,18 @@ func main() {
         }
     }()
 
-    go func() {
-        defer close(b)
+    // go func() {
+    //     defer close(b)
 
-        for n := range a {
-            b <- n * n
-        }
-    }()
+    //     for n := range a {
+    //         b <- n * n
+    //     }
+    // }()
 
-    sum := 0
-    for v := range b {
-        sum += v
-    }
+    // sum := 0
+    // for v := range b {
+    //     sum += v
+    // }
 
     fmt.Println(sum)
 }
